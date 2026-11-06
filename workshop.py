@@ -8,7 +8,7 @@ import cancel
 import winutil
 from cancel import RunCancelled
 from ocr_backend import OcrLine, normalize
-from reader import BASE_DIR, Reader, find_line, parse_timer
+from reader import BASE_DIR, Reader, find_line, parse_timer,load_config
 
 
 class WorkshopError(RuntimeError):
@@ -27,6 +27,23 @@ class Workshop:
 
     def run(self, game) -> list[dict]:
         cancel.check()
+        self.config = load_config() #重新加载防止进程在监听自动启动的过程中，如果用户自行更改了config文件中的物品等信息，需要在启动时需要将新的配置文件数据重新刷新到内存中
+
+        # 同步更新内部缓存，确保使用最新配置
+        self.craft_config = self.config.get("craft", {})
+        self.items = {
+            item["station"]: item for item in self.craft_config.get("items", [])
+        }
+        
+        # 取出 craft 部分打印（现在是最新的）
+        craft = self.config.get("craft", {})
+        items = craft.get("items", [])
+        self.log("当前四工位目标物品：")
+        for item in items:
+            station = item.get("station", "未知")
+            name = item.get("name", "（留空 = 只领取不制作）")
+            self.log(f"  {station}: {name}")
+        
         if not self.craft_config.get("enabled", True):
             self.log("[craft] craft.enabled=false，跳过领取与制作")
             return []
@@ -337,14 +354,14 @@ class Workshop:
     def _find_item_scrolling(self, game, size, name: str) -> OcrLine | None:
         width, height = size
         sx, sy = width * 0.2, height * 0.5
-        for _ in range(6):
+        for _ in range(25):
             winutil.scroll_client(game.hwnd, sx, sy, 5)
         time.sleep(1.0)
         lines = self._snapshot_lines(game)
         hit = self._find_item(lines, size, name)
         if hit is not None:
             return hit
-        for _ in range(6):
+        for _ in range(25):
             winutil.scroll_client(game.hwnd, sx, sy, -3)
             time.sleep(0.8)
             lines = self._snapshot_lines(game)

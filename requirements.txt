@@ -4,6 +4,8 @@ pillow
 apscheduler
 pystray
 numpy
+onnx
+requests
 rapidocr_onnxruntime
 winrt-runtime
 winrt-Windows.Foundation

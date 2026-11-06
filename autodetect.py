@@ -12,7 +12,7 @@ def detect_wegame_exe() -> str | None:
         if win.exe_path.lower().endswith("wegame.exe"):
             return win.exe_path
     candidates = [
-        r"D:\app\WeGame\wegame.exe",
+        r"C:\\Users\\15186\\Desktop\\WeGame_without_UAC.exe",
         r"C:\Program Files (x86)\Tencent\WeGame\wegame.exe",
         r"C:\Program Files\Tencent\WeGame\wegame.exe",
     ]

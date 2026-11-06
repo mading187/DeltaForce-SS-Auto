@@ -14,6 +14,7 @@ import autodetect
 from accounts import get_accounts
 from exchange import format_accounts_history
 from planner import compute_schedule
+from kkrb_profit import bootstrap_hourly_profit_refresh,bootstrap_total_profit_refresh
 
 
 class SettingsWindow:
@@ -111,23 +112,71 @@ class SettingsWindow:
         )
         items.pack(fill="x", pady=(8, 0))
         self.item_vars: dict[str, tk.StringVar] = {}
+
+        # for station in self.config["stations"]:
+        #     row = ttk.Frame(items)
+        #     row.pack(fill="x", pady=2)
+        #     ttk.Label(row, text=station, width=10).pack(side="left")
+        #     var = tk.StringVar()
+        #     self.item_vars[station] = var
+        #     ttk.Entry(row, textvariable=var).pack(
+        #         side="left", fill="x", expand=True, padx=(4, 6)
+        #     )
+        #     ttk.Button(
+        #         row,
+        #         text="自动获取",
+        #         command=lambda s=station: self._auto_item(s),
+        #     ).pack(side="left")
+            # 1. 创建左侧容器：用于放置四工位的输入框
+        left_frame = ttk.Frame(items)
+        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
+
+        # 遍历配置生成左侧输入行
         for station in self.config["stations"]:
-            row = ttk.Frame(items)
+            row = ttk.Frame(left_frame)
             row.pack(fill="x", pady=2)
+            
+            # 站点名称标签
             ttk.Label(row, text=station, width=10).pack(side="left")
+            
+            # 输入框变量绑定
             var = tk.StringVar()
             self.item_vars[station] = var
             ttk.Entry(row, textvariable=var).pack(
                 side="left", fill="x", expand=True, padx=(4, 6)
             )
-            ttk.Button(
-                row,
-                text="自动获取",
-                command=lambda s=station: self._auto_item(s),
-            ).pack(side="left")
+
+        # 2. 创建右侧容器：用于放置两个大按钮
+        right_frame = ttk.Frame(items)
+        right_frame.pack(side="right", fill="y", padx=(10, 0))
+
+        # 右侧按钮1：获取单小时利润最高物品
         ttk.Button(
-            items, text="一键自动获取全部（路径 + 游戏 + 物品）", command=self._auto_all
-        ).pack(anchor="e", pady=(6, 0))
+            right_frame, 
+            text="获取单小时利润最高物品并保存", 
+            # command=lambda: bootstrap_profit_refresh(logger=self.logger), # 绑定对应的单小时利润方法 使用lambda的作用是延迟执行，防止回调绑定错误
+            # command=lambda:self._reload,
+            command=lambda: (
+                bootstrap_hourly_profit_refresh(logger=self.logger),
+                self._reload()
+            ),# 绑定对应的单小时利润方法 使用lambda的作用是延迟执行，防止回调绑定错误
+            style="Bold.TButton"
+        ).pack(fill="x", pady=10, ipady=5)
+
+        # 右侧按钮2：获取总利润最高物品
+        ttk.Button(
+            right_frame, 
+            text="获取总利润最高物品并保存", 
+            # command=lambda: self._auto_profit_total, # 绑定对应的总利润方法
+            command=lambda: (
+                bootstrap_total_profit_refresh(logger=self.logger),
+                self._reload()
+            ),# 绑定对应的总利润方法 使用lambda的作用是延迟执行，防止回调绑定错误
+            style="Bold.TButton"
+        ).pack(fill="x", pady=10, ipady=5)
+        # ttk.Button(
+        #     items, text="一键自动获取全部（路径 + 游戏 + 物品）", command=self._auto_all
+        # ).pack(anchor="e", pady=(6, 0))
 
         rules = ttk.LabelFrame(main, text="规则", padding=8)
         rules.pack(fill="x", pady=(8, 0))

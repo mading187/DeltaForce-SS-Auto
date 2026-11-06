@@ -15,6 +15,7 @@ from exchange import ExchangeRunner
 from ocr_backend import normalize
 from reader import BASE_DIR, LOGIN_KEYWORDS, Reader, find_line, match_score
 from workshop import Workshop
+from awake_screen_tool import wake_screen_once
 
 
 class LaunchError(RuntimeError):
@@ -30,6 +31,8 @@ class Launcher:
         self.exchange = ExchangeRunner(config, logger, self.reader)
 
     def run(self, account: dict | None = None) -> dict:
+        # 1) 电脑处于息屏情况下尝试唤醒屏幕（避免息屏导致 OCR 失败）
+        wake_screen_once(self.log)
         label = account["label"] if account else "默认"
         self.log(
             "=" * 24
@@ -814,7 +817,7 @@ class Launcher:
                 time.sleep(6)
                 continue
 
-            if ("空格" in text or "空投夺宝" in text) and not space_pressed:
+            if ("空格" in text or "空投夺宝" in text or "␣" in text or "继续" in text) and not space_pressed:
                 self.log("[launcher] 活动页面出现 → 按空格")
                 winutil.press_key("space")
                 space_pressed = True
